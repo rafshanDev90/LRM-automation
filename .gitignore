@@ -6,3 +6,5 @@ server/outputs/lab-report-1791874827628.pdf
 PDF_DESIGN_PLAN.md
 server/public/template/template.html
 PLAN.md
+client/node_modules/
+server/public/upload-demo.html
