@@ -1,13 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python.js';
 import 'prismjs/components/prism-c.js';
 import 'prismjs/components/prism-cpp.js';
 import 'prismjs/components/prism-asm6502.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const LANG_MAP = {
   '.js': 'javascript',
@@ -22,6 +19,8 @@ const LANG_MAP = {
   '.json': 'json',
   '.md': 'markdown'
 };
+
+const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.webp', '.pdf'];
 
 function detectLanguage(filename) {
   if (!filename) return 'text';
@@ -55,74 +54,74 @@ function fileToBase64(filePath) {
   return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
 
+/**
+ * Build an output entry from an uploaded file (image -> base64, text -> highlighted).
+ */
+function buildOutput(file) {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (IMAGE_EXTS.includes(ext)) {
+    return { type: 'image', name: file.originalname, dataUrl: fileToBase64(file.path) };
+  }
+  const content = fs.readFileSync(file.path, 'utf-8');
+  return {
+    type: 'text',
+    name: file.originalname,
+    content,
+    highlighted: highlightCode(content, detectLanguage(file.originalname))
+  };
+}
+
+/**
+ * Build a code file entry with line count for the page-break rule:
+ * - < 50 lines  -> single page (break-inside: avoid)
+ * - >= 50 lines -> may flow across 2 pages (break allowed)
+ */
+function buildCodeFile(file) {
+  const content = fs.readFileSync(file.path, 'utf-8');
+  const lineCount = content.split('\n').length;
+  return {
+    name: file.originalname,
+    lang: detectLanguage(file.originalname),
+    content,
+    highlighted: highlightCode(content, detectLanguage(file.originalname)),
+    lineCount,
+    allowBreak: lineCount >= 50
+  };
+}
+
 export function processUploadedFiles(files, taskPairs) {
   const fileMap = new Map(files.map(f => [f.filename, f]));
 
-  return taskPairs.map(({ codeFileId, outputFileId, outputFiles = [], taskName, problemDescription = '' }) => {
-    const codeFile = fileMap.get(codeFileId);
-    if (!codeFile) throw new Error(`Code file not found: ${codeFileId}`);
+  return taskPairs.map((task) => {
+    // Support multiple code files (codeFiles) with fallback to single codeFileId
+    const codeFileIds = task.codeFiles?.length ? task.codeFiles : (task.codeFileId ? [task.codeFileId] : []);
+    if (codeFileIds.length === 0) throw new Error('Task has no code file');
 
-    const codeContent = fs.readFileSync(codeFile.path, 'utf-8');
-    const codeLang = detectLanguage(codeFile.originalname);
-    const codeHighlighted = highlightCode(codeContent, codeLang);
+    const codeFiles = codeFileIds.map((id) => {
+      const f = fileMap.get(id);
+      if (!f) throw new Error(`Code file not found: ${id}`);
+      return buildCodeFile(f);
+    });
 
-    const outputs = [];
+    // Support multiple output files with fallback to single outputFileId
+    const outputFileIds = task.outputFiles?.length
+      ? task.outputFiles
+      : (task.outputFileId ? [task.outputFileId] : []);
 
-    // Handle multiple output image files
-    if (outputFiles.length > 0) {
-      for (const outFileId of outputFiles) {
-        const outFile = fileMap.get(outFileId);
-        if (outFile) {
-          const ext = path.extname(outFile.originalname).toLowerCase();
-          const imgExts = ['.png', '.jpg', '.jpeg', '.webp', '.pdf'];
-          if (imgExts.includes(ext)) {
-            outputs.push({
-              type: 'image',
-              name: outFile.originalname,
-              dataUrl: fileToBase64(outFile.path)
-            });
-          } else {
-            const outContent = fs.readFileSync(outFile.path, 'utf-8');
-            outputs.push({
-              type: 'text',
-              name: outFile.originalname,
-              content: outContent,
-              highlighted: highlightCode(outContent, detectLanguage(outFile.originalname))
-            });
-          }
-        }
-      }
-    }
+    const outputs = outputFileIds
+      .map((id) => fileMap.get(id))
+      .filter(Boolean)
+      .map(buildOutput);
 
-    // Handle single output file (legacy support)
-    if (outputs.length === 0 && outputFileId) {
-      const outputFile = fileMap.get(outputFileId);
-      if (outputFile) {
-        const ext = path.extname(outputFile.originalname).toLowerCase();
-        const imgExts = ['.png', '.jpg', '.jpeg', '.webp', '.pdf'];
-        if (imgExts.includes(ext)) {
-          outputs.push({
-            type: 'image',
-            name: outputFile.originalname,
-            dataUrl: fileToBase64(outputFile.path)
-          });
-        } else {
-          const outContent = fs.readFileSync(outputFile.path, 'utf-8');
-          outputs.push({
-            type: 'text',
-            name: outputFile.originalname,
-            content: outContent,
-            highlighted: highlightCode(outContent, detectLanguage(outputFile.originalname))
-          });
-        }
-      }
-    }
+    const firstCode = codeFiles[0];
 
     return {
-      title: taskName || path.parse(codeFile.originalname).name,
-      problemDescription,
-      codeLang,
-      codeHighlighted,
+      title: task.taskName || path.parse(firstCode.name).name,
+      problemDescription: task.problemDescription || '',
+      codeFiles,
+      // legacy fields (kept for template backward compat)
+      codeLang: firstCode.lang,
+      codeHighlighted: firstCode.highlighted,
       outputs,
       outputHighlighted: outputs.find(o => o.type === 'text')?.highlighted || ''
     };

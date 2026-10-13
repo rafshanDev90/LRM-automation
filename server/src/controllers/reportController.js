@@ -1,13 +1,34 @@
 import * as reportService from '../services/reportService.js';
-import { generateLabReport } from '../services/templateEngine.js';
+import { renderReportHTML, renderPDF } from '../services/templateEngine.js';
 import { getAllTemplates } from '../templates/index.js';
 import fs from 'node:fs';
 import path from 'node:path';
+
+const UPLOAD_DIR = 'uploads';
+
+/**
+ * Upload files (code + outputs). Returns uploaded metadata.
+ */
+const STALE_MS = 60 * 60 * 1000; // 1 hour
+
+/** Delete uploads older than 1 hour (prevents disk fill). */
+function cleanupStaleUploads() {
+  if (!fs.existsSync(UPLOAD_DIR)) return;
+  const cutoff = Date.now() - STALE_MS;
+  for (const f of fs.readdirSync(UPLOAD_DIR)) {
+    const p = path.join(UPLOAD_DIR, f);
+    try {
+      if (fs.statSync(p).mtimeMs < cutoff) fs.unlinkSync(p);
+    } catch {}
+  }
+}
 
 export const uploadFiles = async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ success: false, error: 'No files uploaded.' });
   }
+
+  cleanupStaleUploads();
 
   const files = req.files.map(f => ({
     filename: f.filename,
@@ -20,42 +41,84 @@ export const uploadFiles = async (req, res) => {
   res.json({ success: true, files });
 };
 
-export const generateReport = async (req, res) => {
-  const { taskPairs, labTitle, templateId = 'classic' } = req.body;
-
-  if (!taskPairs || !Array.isArray(taskPairs) || taskPairs.length === 0) {
-    return res.status(400).json({ success: false, error: 'No task pairs provided.' });
-  }
-
-  const uploadDir = 'uploads';
-  if (!fs.existsSync(uploadDir)) {
-    return res.status(500).json({ success: false, error: 'Upload directory missing' });
-  }
-
-  const files = fs.readdirSync(uploadDir).map(f => ({
+function readUploads() {
+  if (!fs.existsSync(UPLOAD_DIR)) return [];
+  return fs.readdirSync(UPLOAD_DIR).map(f => ({
     filename: f,
     originalname: f,
-    path: path.join(uploadDir, f)
+    path: path.join(UPLOAD_DIR, f)
   }));
+}
 
+/**
+ * Build tasks + HTML from taskPairs (shared by preview & generate).
+ * Returns { tasks, html } or throws.
+ */
+function buildReport(reqBody) {
+  const { taskPairs, labTitle, templateId = 'classic' } = reqBody;
+  if (!taskPairs || !Array.isArray(taskPairs) || taskPairs.length === 0) {
+    throw Object.assign(new Error('No task pairs provided.'), { status: 400 });
+  }
+  const files = readUploads();
+  const tasks = reportService.processUploadedFiles(files, taskPairs);
+  const html = renderReportHTML(tasks, labTitle || 'Lab Report', templateId);
+  return { tasks, html, files };
+}
+
+/**
+ * Step 1 (NEW): generate HTML preview instead of PDF.
+ * User can then edit the HTML before downloading.
+ */
+export const previewHTML = (req, res) => {
   try {
-    const tasks = reportService.processUploadedFiles(files, taskPairs);
-    const pdfPath = await generateLabReport(tasks, labTitle || 'Lab Report', templateId);
+    const result = buildReport(req.body);
+    res.json({
+      success: true,
+      html: result.html,
+      taskCount: result.tasks.length,
+      template: req.body.templateId || 'classic'
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({ success: false, error: error.message });
+  }
+};
 
+/**
+ * Step 2 (NEW): accept final (possibly user-edited) HTML -> render PDF.
+ */
+export const generateFromHTML = async (req, res) => {
+  const { html } = req.body;
+  if (!html || typeof html !== 'string') {
+    return res.status(400).json({ success: false, error: 'No HTML provided.' });
+  }
+  try {
+    const pdfPath = await renderPDF(html);
+    res.json({
+      success: true,
+      message: 'PDF generated successfully',
+      pdfUrl: `/download/${path.basename(pdfPath)}`
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+/**
+ * Legacy direct path: taskPairs -> PDF in one call.
+ */
+export const generateReport = async (req, res) => {
+  try {
+    const result = buildReport(req.body);
+    const pdfPath = await renderPDF(result.html);
     res.json({
       success: true,
       message: 'PDF generated successfully',
       pdfUrl: `/download/${path.basename(pdfPath)}`,
-      taskCount: tasks.length,
-      template: templateId
+      taskCount: result.tasks.length,
+      template: req.body.templateId || 'classic'
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  } finally {
-    // Cleanup uploaded files
-    for (const file of files) {
-      try { fs.unlinkSync(file.path); } catch {}
-    }
+    res.status(error.status || 500).json({ success: false, error: error.message });
   }
 };
 

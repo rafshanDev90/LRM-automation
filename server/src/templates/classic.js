@@ -48,56 +48,42 @@ ${this.getTaskCSS()}
   <main class="content">
     ${tasksHTML}
   </main>
-
-  ${this.options.pageNumbers ? `<script>window.onload = function() { window.print(); }</script>` : ''}
 </body>
 </html>`;
   }
 
   renderTask(task, taskNum) {
     const probHTML = task.problemDescription
-      ? `<div class="section">
+      ? `<div class="section keep-together">
            <div class="section-title">2. Problem Description</div>
            <div class="section-content">${this.convertMarkdown(task.problemDescription)}</div>
          </div>`
       : '';
 
+    // Multi code file support with line-based page-break rule
+    const codeFiles = task.codeFiles?.length
+      ? task.codeFiles
+      : [{ name: 'source', lang: task.codeLang, highlighted: task.codeHighlighted, allowBreak: false }];
+
+    const codeBlocks = codeFiles.map(cf => `
+        <div class="code-file ${cf.allowBreak ? 'code-long' : 'code-short'}">
+          ${codeFiles.length > 1 ? `<div class="file-label">${this.escapeHtml(cf.name)}</div>` : ''}
+          <div class="code-wrapper"><pre class="code-block"><code>${cf.highlighted}</code></pre></div>
+        </div>`).join('');
+
     const codeHTML = `<div class="section">
                         <div class="section-title">3. Source Code</div>
-                        <div class="code-wrapper">
-                          <pre class="code-block"><code>${task.codeHighlighted}</code></pre>
-                        </div>
+                        ${codeBlocks}
                       </div>`;
 
-    const outputHTML = task.outputs && task.outputs.length > 0
-      ? `<div class="section">
-           <div class="section-title">4. Output</div>
-           ${task.outputs.map(out => {
-             if (out.type === 'image') {
-               return `<div class="image-wrapper">
-                         <img src="${out.dataUrl}" alt="${this.escapeHtml(out.name)}" />
-                       </div>`;
-             }
-             return `<div class="output-wrapper">
-                       <pre class="output-block"><code>${out.highlighted || this.escapeHtml(out.content)}</code></pre>
-                     </div>`;
-           }).join('')}
-         </div>`
-      : (task.outputHighlighted
-          ? `<div class="section">
-               <div class="section-title">4. Output</div>
-               <div class="output-wrapper">
-                 <pre class="output-block"><code>${task.outputHighlighted}</code></pre>
-               </div>
-             </div>`
-          : '');
+    const outputHTML = this.renderOutputs(task);
 
     return `<section class="task-card">
-      <div class="task-header">
+      <div class="task-header keep-together">
         <h2 class="task-title">Task ${taskNum}: ${this.escapeHtml(task.title)}</h2>
       </div>
 
-      <div class="section">
+      <div class="section keep-together">
         <div class="section-title">1. Title</div>
         <div class="section-content">${this.escapeHtml(task.title)}</div>
       </div>
@@ -108,8 +94,69 @@ ${this.getTaskCSS()}
     </section>`;
   }
 
+  renderOutputs(task) {
+    if (task.outputs && task.outputs.length > 0) {
+      const items = task.outputs.map(out => {
+        if (out.type === 'image') {
+          return `<div class="image-wrapper keep-together">
+                    <img src="${out.dataUrl}" alt="${this.escapeHtml(out.name)}" />
+                  </div>`;
+        }
+        return `<div class="output-wrapper output-text">
+                  <pre class="output-block"><code>${out.highlighted || this.escapeHtml(out.content)}</code></pre>
+                </div>`;
+      }).join('');
+      return `<div class="section">
+                <div class="section-title">4. Output</div>
+                ${items}
+              </div>`;
+    }
+
+    if (task.outputHighlighted) {
+      return `<div class="section">
+                <div class="section-title">4. Output</div>
+                <div class="output-wrapper output-text">
+                  <pre class="output-block"><code>${task.outputHighlighted}</code></pre>
+                </div>
+              </div>`;
+    }
+    return '';
+  }
+
   getTaskCSS() {
-    return `.report-header {
+    return `/* ===== Page-break rules =====
+       keep-together    -> never split (headers, description, images)
+       code-short (<50) -> 1 page (avoid break)
+       code-long (>=50) -> may flow to next page */
+.keep-together {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.code-short .code-wrapper {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.code-long .code-wrapper {
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.pre, pre {
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.code-block code, .output-block code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.report-header {
   text-align: center;
   margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
@@ -193,11 +240,35 @@ ${this.getTaskCSS()}
   margin-bottom: 0.375rem;
 }
 
+.code-file {
+  margin-bottom: 1.25rem;
+}
+
+.code-file:last-child {
+  margin-bottom: 0;
+}
+
+.file-label {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 9pt;
+  font-weight: bold;
+  color: var(--accent);
+  background: rgba(30, 58, 138, 0.08);
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+
 .code-wrapper {
   background: var(--code-bg);
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+}
+
+.code-file .file-label + .code-wrapper {
+  border-radius: 0 0 6px 6px;
 }
 
 .code-block {
@@ -206,8 +277,15 @@ ${this.getTaskCSS()}
   margin: 0;
   padding: 1.25rem;
   overflow-x: auto;
-  max-height: 500px;
   overflow-y: auto;
+}
+
+.code-short .code-block {
+  max-height: none;
+}
+
+.code-long .code-block {
+  max-height: 640px;
 }
 
 .code-block code {
@@ -215,7 +293,6 @@ ${this.getTaskCSS()}
   font-size: 9pt;
   line-height: 1.6;
   background: transparent !important;
-  white-space: pre;
 }
 
 .output-wrapper {
@@ -223,6 +300,7 @@ ${this.getTaskCSS()}
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.4);
+  margin-bottom: 1rem;
 }
 
 .output-block {
@@ -231,8 +309,6 @@ ${this.getTaskCSS()}
   margin: 0;
   padding: 1rem 1.25rem;
   overflow-x: auto;
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .output-block code {
@@ -240,13 +316,11 @@ ${this.getTaskCSS()}
   font-size: 9pt;
   line-height: 1.6;
   background: transparent !important;
-  white-space: pre;
 }
 
 .image-wrapper {
   margin: 1rem 0;
   text-align: center;
-  page-break-inside: avoid;
 }
 
 .image-wrapper img {

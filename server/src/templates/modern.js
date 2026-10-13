@@ -54,44 +54,31 @@ ${this.getTaskCSS()}
 
   renderTask(task, taskNum) {
     const probHTML = task.problemDescription
-      ? `<div class="card-section">
+      ? `<div class="card-section keep-together">
            <div class="section-label">Problem Description</div>
            <div class="section-body">${this.convertMarkdown(task.problemDescription)}</div>
          </div>`
       : '';
 
+    const codeFiles = task.codeFiles?.length
+      ? task.codeFiles
+      : [{ name: 'source', lang: task.codeLang, highlighted: task.codeHighlighted, allowBreak: false }];
+
+    const codeBlocks = codeFiles.map(cf => `
+        <div class="code-file ${cf.allowBreak ? 'code-long' : 'code-short'}">
+          ${codeFiles.length > 1 ? `<div class="file-label">${this.escapeHtml(cf.name)}</div>` : ''}
+          <div class="modern-code-wrap"><pre class="modern-code"><code>${cf.highlighted}</code></pre></div>
+        </div>`).join('');
+
     const codeHTML = `<div class="card-section">
                         <div class="section-label">Source Code</div>
-                        <div class="modern-code-wrap">
-                          <pre class="modern-code"><code>${task.codeHighlighted}</code></pre>
-                        </div>
+                        ${codeBlocks}
                       </div>`;
 
-    const outputHTML = task.outputs && task.outputs.length > 0
-      ? `<div class="card-section">
-           <div class="section-label">Output</div>
-           ${task.outputs.map(out => {
-             if (out.type === 'image') {
-               return `<div class="modern-image-wrap">
-                         <img src="${out.dataUrl}" alt="${this.escapeHtml(out.name)}" />
-                       </div>`;
-             }
-             return `<div class="modern-output-wrap">
-                       <pre class="modern-output"><code>${out.highlighted || this.escapeHtml(out.content)}</code></pre>
-                     </div>`;
-           }).join('')}
-         </div>`
-      : (task.outputHighlighted
-          ? `<div class="card-section">
-               <div class="section-label">Output</div>
-               <div class="modern-output-wrap">
-                 <pre class="modern-output"><code>${task.outputHighlighted}</code></pre>
-               </div>
-             </div>`
-          : '');
+    const outputHTML = this.renderOutputs(task);
 
     return `<article class="task-card-modern">
-      <div class="task-card-header">
+      <div class="task-card-header keep-together">
         <span class="task-badge">Task ${taskNum}</span>
         <h2 class="task-name">${this.escapeHtml(task.title)}</h2>
       </div>
@@ -103,8 +90,69 @@ ${this.getTaskCSS()}
     </article>`;
   }
 
+  renderOutputs(task) {
+    if (task.outputs && task.outputs.length > 0) {
+      const items = task.outputs.map(out => {
+        if (out.type === 'image') {
+          return `<div class="modern-image-wrap keep-together">
+                    <img src="${out.dataUrl}" alt="${this.escapeHtml(out.name)}" />
+                  </div>`;
+        }
+        return `<div class="modern-output-wrap">
+                  <pre class="modern-output"><code>${out.highlighted || this.escapeHtml(out.content)}</code></pre>
+                </div>`;
+      }).join('');
+      return `<div class="card-section">
+                <div class="section-label">Output</div>
+                ${items}
+              </div>`;
+    }
+
+    if (task.outputHighlighted) {
+      return `<div class="card-section">
+                <div class="section-label">Output</div>
+                <div class="modern-output-wrap">
+                  <pre class="modern-output"><code>${task.outputHighlighted}</code></pre>
+                </div>
+              </div>`;
+    }
+    return '';
+  }
+
   getTaskCSS() {
-    return `.modern-header {
+    return `/* ===== Page-break rules =====
+       keep-together    -> never split (headers, description, images)
+       code-short (<50) -> 1 page (avoid break)
+       code-long (>=50) -> may flow to next page */
+.keep-together {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.code-short .modern-code-wrap {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.code-long .modern-code-wrap {
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.modern-code, .modern-output {
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+.modern-code code, .modern-output code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.modern-header {
   margin-bottom: 2.5rem;
 }
 
@@ -148,7 +196,6 @@ ${this.getTaskCSS()}
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  page-break-inside: avoid;
 }
 
 .task-card-header {
@@ -225,23 +272,44 @@ ${this.getTaskCSS()}
   margin-bottom: 0.5rem;
 }
 
-.modern-code-wrap,
-.modern-output-wrap {
+.code-file {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.code-file .file-label {
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-size: 9pt;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+}
+
+.modern-code-wrap {
   background: var(--code-bg);
   border-radius: 8px;
   overflow: hidden;
 }
 
-.modern-code,
-.modern-output {
-  background: transparent !important;
+.code-short .modern-code,
+.code-long .modern-code {
   color: #e2e8f0;
   margin: 0;
   padding: 1.5rem;
   overflow-x: auto;
-  max-height: 550px;
-  overflow-y: auto;
   line-height: 1.7;
+}
+
+.code-short .modern-code {
+  max-height: none;
+}
+
+.code-long .modern-code {
+  max-height: 640px;
+  overflow-y: auto;
 }
 
 .modern-code code,
@@ -249,20 +317,20 @@ ${this.getTaskCSS()}
   font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
   font-size: 9pt;
   background: transparent !important;
-  white-space: pre;
 }
 
 .modern-output-wrap {
   background: #0c1021;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .modern-output {
   color: #a5b4fc;
-}
-
-.modern-image-wrap {
-  margin: 0.5rem 0;
-  page-break-inside: avoid;
+  margin: 0;
+  padding: 1.5rem;
+  overflow-x: auto;
+  line-height: 1.7;
 }
 
 .modern-image-wrap img {
