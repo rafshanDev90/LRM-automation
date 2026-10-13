@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Report Maker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+    header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 2rem; }
+    header h1 { font-size: 1.75rem; font-weight: 700; }
+    header p { opacity: 0.9; margin-top: 0.5rem; }
+    main { padding: 2rem; }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.1rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-title::before { content: ''; width: 4px; height: 20px; background: #2563eb; border-radius: 2px; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-size: 0.875rem; font-weight: 500; color: #475569; }
+    input[type="text"], input[type="file"] { padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    input[type="text"]:focus, input[type="file"]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    .task-form { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; position: relative; }
+    .task-form:hover { border-color: #cbd5e1; }
+    .task-header-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
+    .task-header-row > div { flex: 1; min-width: 200px; }
+    .file-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .file-inputs > div { display: flex; flex-direction: column; gap: 0.5rem; }
+    .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s; height: fit-content; }
+    .btn-remove:hover { background: #fecaca; }
+    .tasks-empty { text-align: center; padding: 3rem; color: #94a3b8; }
+    .tasks-empty svg { width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5; }
+    .btn { padding: 0.875rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .btn-primary { background: #2563eb; color: white; width: 100%; }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: #e2e8f0; color: #475569; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 1000; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: #16a34a; }
+    .toast.error { background: #dc2626; }
+    .toast.info { background: #2563eb; }
+    @media (max-width: 600px) {
+      .file-inputs { grid-template-columns: 1fr; }
+      .task-header-row > div { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📄 Lab Report Maker</h1>
+      <p>Upload code + output for each task → Get a professional PDF</p>
+    </header>
+    <main>
+      <div class="section">
+        <div class="section-title">Lab Title</div>
+        <div class="input-group">
+          <label for="labTitle">Report title</label>
+          <input type="text" id="labTitle" placeholder="e.g., Data Structures Lab 3 — Trees & Graphs" value="Lab Report">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" id="tasksTitle">Tasks (0)</div>
+        <div id="tasksContainer"></div>
+        <button class="btn btn-secondary" id="addTaskBtn" style="width: 100%; margin-top: 1rem;">
+          + Add Another Task
+        </button>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="generateBtn" style="flex: 1;" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Generate PDF
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let taskCounter = 0;
+    const tasksContainer = document.getElementById('tasksContainer');
+    const tasksTitle = document.getElementById('tasksTitle');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(message, type = 'info') {
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function updateTasksTitle() {
+      const count = tasksContainer.children.length;
+      tasksTitle.textContent = `Tasks (${count})`;
+      generateBtn.disabled = count === 0;
+    }
+
+    function createTaskForm() {
+      const taskId = ++taskCounter;
+      const div = document.createElement('div');
+      div.className = 'task-form';
+      div.dataset.taskId = taskId;
+      div.innerHTML = `
+        <div class="task-header-row">
+          <div>
+            <label>Task Name</label>
+            <input type="text" class="task-name" placeholder="e.g., Task 1: Binary Search" value="Task ${taskId}">
+          </div>
+          <button class="btn-remove" type="button">Remove</button>
+        </div>
+        <div class="file-inputs">
+          <div>
+            <label>Code File <span style="color:#dc2626;font-weight:400">*</span></label>
+            <input type="file" class="code-file" accept=".js,.py,.c,.cpp,.asm,.s,.txt" required>
+          </div>
+          <div>
+            <label>Output File <span style="color:#64748b;font-weight:400">(optional)</span></label>
+            <input type="file" class="output-file" accept=".txt,.out,.log">
+          </div>
+        </div>
+      `;
+      div.querySelector('.btn-remove').addEventListener('click', () => {
+        div.remove();
+        updateTasksTitle();
+      });
+      // Validate on change
+      div.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', validateForm);
+      });
+      return div;
+    }
+
+    function validateForm() {
+      const forms = tasksContainer.querySelectorAll('.task-form');
+      let allValid = forms.length > 0;
+      for (const form of forms) {
+        const codeFile = form.querySelector('.code-file').files[0];
+        const taskName = form.querySelector('.task-name').value.trim();
+        if (!codeFile || !taskName) { allValid = false; break; }
+      }
+      generateBtn.disabled = !allValid;
+    }
+
+    addTaskBtn.addEventListener('click', () => {
+      tasksContainer.appendChild(createTaskForm());
+      updateTasksTitle();
+    });
+
+    generateBtn.addEventListener('click', async () => {
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = `<svg class="spinner" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 15" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/></circle></svg> Generating...`;
+
+      const forms = tasksContainer.querySelectorAll('.task-form');
+      const taskPairs = [];
+
+      // First upload all files
+      const allFiles = [];
+      for (const form of forms) {
+        const codeFile = form.querySelector('.code-file').files[0];
+        const outputFile = form.querySelector('.output-file').files[0];
+        const taskName = form.querySelector('.task-name').value.trim();
+
+        if (!codeFile) continue;
+        allFiles.push({ file: codeFile, type: 'code', taskName });
+        if (outputFile) allFiles.push({ file: outputFile, type: 'output', taskName });
+      }
+
+      try {
+        const formData = new FormData();
+        for (const { file } of allFiles) formData.append('files', file);
+
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+        const uploadJson = await uploadRes.json();
+        if (!uploadJson.success) throw new Error(uploadJson.error);
+
+        // Build taskPairs from uploaded filenames
+        const uploadedMap = new Map();
+        for (const f of uploadJson.files) {
+          const key = f.originalname;
+          uploadedMap.set(key, f.filename);
+        }
+
+        for (const form of forms) {
+          const codeFile = form.querySelector('.code-file').files[0];
+          const outputFile = form.querySelector('.output-file').files[0];
+          const taskName = form.querySelector('.task-name').value.trim();
+
+          taskPairs.push({
+            codeFileId: uploadedMap.get(codeFile.name),
+            outputFileId: outputFile ? uploadedMap.get(outputFile.name) : null,
+            taskName
+          });
+        }
+
+        // Generate report
+        const labTitle = document.getElementById('labTitle').value.trim() || 'Lab Report';
+        const genRes = await fetch('/api/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskPairs, labTitle })
+        });
+        const genJson = await genRes.json();
+        if (!genJson.success) throw new Error(genJson.error);
+
+        showToast(`PDF ready! ${genJson.taskCount} tasks`, 'success');
+        setTimeout(() => {
+          window.location.href = genJson.pdfUrl;
+        }, 500);
+      } catch (err) {
+        showToast(err.message, 'error');
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Generate PDF`;
+      }
+    });
+
+    // Start with one task
+    tasksContainer.appendChild(createTaskForm());
+    updateTasksTitle();
+
+    // Spinner CSS
+    const style = document.createElement('style');
+    style.textContent = `.spinner { animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

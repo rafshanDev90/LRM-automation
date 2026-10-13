@@ -1,0 +1,4 @@
+server/.gitignore
+Lab7/
+server/outputs/compiled-lab1.js.txt
+server/outputs/final-report-lab1.txt
