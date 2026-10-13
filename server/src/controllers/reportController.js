@@ -1,5 +1,8 @@
 import * as reportService from '../services/reportService.js';
+import { generateLabReport } from '../services/templateEngine.js';
+import { getAllTemplates } from '../templates/index.js';
 import fs from 'node:fs';
+import path from 'node:path';
 
 export const uploadFiles = async (req, res) => {
   if (!req.files || req.files.length === 0) {
@@ -18,13 +21,17 @@ export const uploadFiles = async (req, res) => {
 };
 
 export const generateReport = async (req, res) => {
-  const { taskPairs, labTitle } = req.body;
+  const { taskPairs, labTitle, templateId = 'classic' } = req.body;
 
   if (!taskPairs || !Array.isArray(taskPairs) || taskPairs.length === 0) {
     return res.status(400).json({ success: false, error: 'No task pairs provided.' });
   }
 
   const uploadDir = 'uploads';
+  if (!fs.existsSync(uploadDir)) {
+    return res.status(500).json({ success: false, error: 'Upload directory missing' });
+  }
+
   const files = fs.readdirSync(uploadDir).map(f => ({
     filename: f,
     originalname: f,
@@ -33,13 +40,14 @@ export const generateReport = async (req, res) => {
 
   try {
     const tasks = reportService.processUploadedFiles(files, taskPairs);
-    const pdfPath = await reportService.generateLabReport(tasks, labTitle || 'Lab Report');
+    const pdfPath = await generateLabReport(tasks, labTitle || 'Lab Report', templateId);
 
     res.json({
       success: true,
       message: 'PDF generated successfully',
       pdfUrl: `/download/${path.basename(pdfPath)}`,
-      taskCount: tasks.length
+      taskCount: tasks.length,
+      template: templateId
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -59,4 +67,6 @@ export const downloadPDF = (req, res) => {
   res.download(filePath);
 };
 
-import path from 'node:path';
+export const getTemplates = (req, res) => {
+  res.json({ success: true, templates: getAllTemplates() });
+};

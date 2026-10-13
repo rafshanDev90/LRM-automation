@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lab Report Maker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; padding: 2rem; }
-    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; padding: 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
     header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 2rem; }
     header h1 { font-size: 1.75rem; font-weight: 700; }
     header p { opacity: 0.9; margin-top: 0.5rem; }
@@ -15,12 +16,12 @@
     .section { margin-bottom: 2rem; }
     .section-title { font-size: 1.1rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
     .section-title::before { content: ''; width: 4px; height: 20px; background: #2563eb; border-radius: 2px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
     label { font-size: 0.875rem; font-weight: 500; color: #475569; }
-    input[type="text"], input[type="file"] { padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
-    input[type="text"]:focus, input[type="file"]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    input[type="text"], select { padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    input[type="text"]:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
     .task-form { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; position: relative; }
-    .task-form:hover { border-color: #cbd5e1; }
     .task-header-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
     .task-header-row > div { flex: 1; min-width: 200px; }
     .file-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -28,7 +29,6 @@
     .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s; height: fit-content; }
     .btn-remove:hover { background: #fecaca; }
     .tasks-empty { text-align: center; padding: 3rem; color: #94a3b8; }
-    .tasks-empty svg { width: 48px; height: 48px; margin-bottom: 1rem; opacity: 0.5; }
     .btn { padding: 0.875rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
     .btn-primary { background: #2563eb; color: white; width: 100%; }
     .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
@@ -41,9 +41,17 @@
     .toast.success { background: #16a34a; }
     .toast.error { background: #dc2626; }
     .toast.info { background: #2563eb; }
-    @media (max-width: 600px) {
+    .template-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.2s; }
+    .template-card.active { border-color: #2563eb; background: rgba(37, 99, 235, 0.05); }
+    .template-card h4 { margin-bottom: 0.25rem; color: #1e293b; }
+    .template-card p { font-size: 0.875rem; color: #64748b; }
+    .editor-label { font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.5rem; display: block; }
+    .CodeMirror { border: 2px solid #e2e8f0; border-radius: 8px; }
+    .file-list { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.375rem; }
+    .file-item { font-size: 0.8rem; color: #475569; padding: 0.375rem 0.75rem; background: white; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
       .file-inputs { grid-template-columns: 1fr; }
-      .task-header-row > div { min-width: 100%; }
     }
   </style>
 </head>
@@ -51,14 +59,20 @@
   <div class="container">
     <header>
       <h1>📄 Lab Report Maker</h1>
-      <p>Upload code + output for each task → Get a professional PDF</p>
+      <p>Upload code, output screenshots & write problem description → Get professional PDF</p>
     </header>
     <main>
       <div class="section">
-        <div class="section-title">Lab Title</div>
-        <div class="input-group">
-          <label for="labTitle">Report title</label>
-          <input type="text" id="labTitle" placeholder="e.g., Data Structures Lab 3 — Trees & Graphs" value="Lab Report">
+        <div class="section-title">Lab Info</div>
+        <div class="grid">
+          <div class="input-group">
+            <label for="labTitle">Report Title</label>
+            <input type="text" id="labTitle" placeholder="e.g., Data Structures Lab 3" value="Lab Report">
+          </div>
+          <div class="input-group">
+            <label for="templateSelect">Template</label>
+            <select id="templateSelect"></select>
+          </div>
         </div>
       </div>
 
@@ -71,8 +85,7 @@
       </div>
 
       <div class="actions">
-        <button class="btn btn-primary" id="generateBtn" style="flex: 1;" disabled>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <button class="btn btn-primary" id="generateBtn" disabled>
           Generate PDF
         </button>
       </div>
@@ -80,14 +93,28 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
+  <script src="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js"></script>
   <script>
     let taskCounter = 0;
+    const editors = [];
     const tasksContainer = document.getElementById('tasksContainer');
     const tasksTitle = document.getElementById('tasksTitle');
     const addTaskBtn = document.getElementById('addTaskBtn');
     const generateBtn = document.getElementById('generateBtn');
     const toast = document.getElementById('toast');
+    const templateSelect = document.getElementById('templateSelect');
+
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/templates');
+        const data = await res.json();
+        if (data.success) {
+          templateSelect.innerHTML = data.templates.map(t =>
+            `<option value="${t.id}">${t.name} - ${t.description}</option>`
+          ).join('');
+        }
+      } catch (e) { console.error('Failed to load templates', e); }
+    }
 
     function showToast(message, type = 'info') {
       toast.textContent = message;
@@ -109,30 +136,53 @@
       div.innerHTML = `
         <div class="task-header-row">
           <div>
-            <label>Task Name</label>
-            <input type="text" class="task-name" placeholder="e.g., Task 1: Binary Search" value="Task ${taskId}">
+            <label>Task Title</label>
+            <input type="text" class="task-title" placeholder="e.g., Binary Search Implementation" value="Task ${taskId}">
           </div>
           <button class="btn-remove" type="button">Remove</button>
         </div>
-        <div class="file-inputs">
+
+        <div class="section" style="margin-bottom: 1.5rem;">
+          <label class="editor-label">Problem Description (Markdown supported)</label>
+          <textarea class="problem-editor" id="editor-${taskId}"></textarea>
+        </div>
+
+        <div class="file-inputs" style="margin-bottom: 1.5rem;">
           <div>
-            <label>Code File <span style="color:#dc2626;font-weight:400">*</span></label>
+            <label>Source Code File <span style="color:#dc2626">*</span></label>
             <input type="file" class="code-file" accept=".js,.py,.c,.cpp,.asm,.s,.txt" required>
           </div>
           <div>
-            <label>Output File <span style="color:#64748b;font-weight:400">(optional)</span></label>
-            <input type="file" class="output-file" accept=".txt,.out,.log">
+            <label>Output Files (Screenshots or Text) <span style="color:#64748b">(optional)</span></label>
+            <input type="file" class="output-files" accept=".png,.jpg,.jpeg,.webp,.txt,.out,.log" multiple>
+            <div class="file-list output-file-list"></div>
           </div>
         </div>
       `;
+      
       div.querySelector('.btn-remove').addEventListener('click', () => {
         div.remove();
         updateTasksTitle();
       });
-      // Validate on change
-      div.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', validateForm);
+
+      div.querySelector('.code-file').addEventListener('change', validateForm);
+
+      const outputInput = div.querySelector('.output-files');
+      const outputList = div.querySelector('.output-file-list');
+      outputInput.addEventListener('change', () => {
+        outputList.innerHTML = Array.from(outputInput.files).map(f => 
+          `<div class="file-item"><span>${f.name} (${(f.size/1024).toFixed(1)} KB)</span></div>`
+        ).join('');
       });
+
+      const editor = new SimpleMDE({ 
+        element: div.querySelector('.problem-editor'),
+        spellChecker: false,
+        status: false,
+        toolbar: ['bold', 'italic', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'code', 'link']
+      });
+      editors.push({ taskId, editor });
+
       return div;
     }
 
@@ -141,8 +191,8 @@
       let allValid = forms.length > 0;
       for (const form of forms) {
         const codeFile = form.querySelector('.code-file').files[0];
-        const taskName = form.querySelector('.task-name').value.trim();
-        if (!codeFile || !taskName) { allValid = false; break; }
+        const taskTitle = form.querySelector('.task-title').value.trim();
+        if (!codeFile || !taskTitle) { allValid = false; break; }
       }
       generateBtn.disabled = !allValid;
     }
@@ -154,79 +204,70 @@
 
     generateBtn.addEventListener('click', async () => {
       generateBtn.disabled = true;
-      generateBtn.innerHTML = `<svg class="spinner" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 15" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/></circle></svg> Generating...`;
+      generateBtn.innerHTML = '⏳ Generating...';
 
       const forms = tasksContainer.querySelectorAll('.task-form');
-      const taskPairs = [];
-
-      // First upload all files
       const allFiles = [];
-      for (const form of forms) {
-        const codeFile = form.querySelector('.code-file').files[0];
-        const outputFile = form.querySelector('.output-file').files[0];
-        const taskName = form.querySelector('.task-name').value.trim();
-
-        if (!codeFile) continue;
-        allFiles.push({ file: codeFile, type: 'code', taskName });
-        if (outputFile) allFiles.push({ file: outputFile, type: 'output', taskName });
-      }
 
       try {
+        // Collect all files and task pairs
+        const taskPairs = [];
+        for (const form of forms) {
+          const codeFile = form.querySelector('.code-file').files[0];
+          const outputFiles = Array.from(form.querySelector('.output-files').files);
+          const taskTitle = form.querySelector('.task-title').value.trim();
+          const taskId = form.dataset.taskId;
+          const editor = editors.find(e => e.taskId == taskId)?.editor;
+          const problemDesc = editor ? editor.value() : '';
+
+          if (!codeFile) continue;
+          allFiles.push({ file: codeFile });
+          outputFiles.forEach(f => allFiles.push({ file: f }));
+
+          taskPairs.push({
+            codeFileId: codeFile.name,
+            outputFiles: outputFiles.map(f => f.name),
+            taskName: taskTitle,
+            problemDescription: problemDesc
+          });
+        }
+
         const formData = new FormData();
         for (const { file } of allFiles) formData.append('files', file);
-
         const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
         const uploadJson = await uploadRes.json();
         if (!uploadJson.success) throw new Error(uploadJson.error);
 
-        // Build taskPairs from uploaded filenames
-        const uploadedMap = new Map();
-        for (const f of uploadJson.files) {
-          const key = f.originalname;
-          uploadedMap.set(key, f.filename);
-        }
+        const uploadedMap = new Map(uploadJson.files.map(f => [f.originalname, f.filename]));
+        taskPairs.forEach(tp => {
+          tp.codeFileId = uploadedMap.get(tp.codeFileId);
+          tp.outputFiles = tp.outputFiles.map(n => uploadedMap.get(n)).filter(Boolean);
+        });
 
-        for (const form of forms) {
-          const codeFile = form.querySelector('.code-file').files[0];
-          const outputFile = form.querySelector('.output-file').files[0];
-          const taskName = form.querySelector('.task-name').value.trim();
-
-          taskPairs.push({
-            codeFileId: uploadedMap.get(codeFile.name),
-            outputFileId: outputFile ? uploadedMap.get(outputFile.name) : null,
-            taskName
-          });
-        }
-
-        // Generate report
         const labTitle = document.getElementById('labTitle').value.trim() || 'Lab Report';
+        const templateId = templateSelect.value;
         const genRes = await fetch('/api/generate-report', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskPairs, labTitle })
+          body: JSON.stringify({ taskPairs, labTitle, templateId })
         });
         const genJson = await genRes.json();
         if (!genJson.success) throw new Error(genJson.error);
 
         showToast(`PDF ready! ${genJson.taskCount} tasks`, 'success');
-        setTimeout(() => {
-          window.location.href = genJson.pdfUrl;
-        }, 500);
+        setTimeout(() => { window.location.href = genJson.pdfUrl; }, 800);
       } catch (err) {
         showToast(err.message, 'error');
         generateBtn.disabled = false;
-        generateBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Generate PDF`;
+        generateBtn.innerHTML = 'Generate PDF';
       }
     });
 
-    // Start with one task
-    tasksContainer.appendChild(createTaskForm());
-    updateTasksTitle();
-
-    // Spinner CSS
-    const style = document.createElement('style');
-    style.textContent = `.spinner { animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
-    document.head.appendChild(style);
+    loadTemplates().then(() => {
+      tasksContainer.appendChild(createTaskForm());
+      updateTasksTitle();
+      document.querySelectorAll('input').forEach(i => i.addEventListener('change', validateForm));
+    });
   </script>
 </body>
 </html>

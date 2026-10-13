@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExt = ['.js', '.py', '.c', '.cpp', '.asm', '.s', '.txt', '.out', '.log'];
+  const allowedExt = ['.js', '.py', '.c', '.cpp', '.asm', '.s', '.txt', '.out', '.log', '.png', '.jpg', '.jpeg', '.webp', '.pdf'];
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedExt.includes(ext)) cb(null, true);
   else cb(new Error(`Unsupported file type: ${ext}`), false);
@@ -23,5 +23,5 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024, files: 20 }
+  limits: { fileSize: 10 * 1024 * 1024, files: 30 }
 });
