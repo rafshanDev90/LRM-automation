@@ -21,37 +21,139 @@
     label { font-size: 0.875rem; font-weight: 500; color: #475569; }
     input[type="text"], select { padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
     input[type="text"]:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+    /* ── Task card ── */
     .task-form { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; position: relative; }
     .task-header-row { display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
     .task-header-row > div { flex: 1; min-width: 200px; }
+
+    /* ── File input grid: code takes more space ── */
     .file-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .file-inputs > div { display: flex; flex-direction: column; gap: 0.5rem; }
+
     .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s; height: fit-content; }
     .btn-remove:hover { background: #fecaca; }
     .tasks-empty { text-align: center; padding: 3rem; color: #94a3b8; }
+
+    /* ── Buttons ── */
     .btn { padding: 0.875rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
-    .btn-primary { background: #2563eb; color: white; width: 100%; }
-    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-secondary { background: #e2e8f0; color: #475569; }
-    .btn-secondary:hover { background: #cbd5e1; }
-    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; }
-    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 1000; }
+    .btn-secondary:hover:not(:disabled) { background: #cbd5e1; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn-success:hover:not(:disabled) { background: #15803d; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); }
+    .btn-success:disabled { background: #86efac; cursor: not-allowed; }
+
+    .actions { display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .actions .btn { flex: 1; min-width: 160px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.15); transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 2000; max-width: 340px; }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { background: #16a34a; }
     .toast.error { background: #dc2626; }
     .toast.info { background: #2563eb; }
-    .template-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.2s; }
-    .template-card.active { border-color: #2563eb; background: rgba(37, 99, 235, 0.05); }
-    .template-card h4 { margin-bottom: 0.25rem; color: #1e293b; }
-    .template-card p { font-size: 0.875rem; color: #64748b; }
-    .editor-label { font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.5rem; display: block; }
-    .CodeMirror { border: 2px solid #e2e8f0; border-radius: 8px; }
+
+    /* ── File list ── */
     .file-list { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.375rem; }
     .file-item { font-size: 0.8rem; color: #475569; padding: 0.375rem 0.75rem; background: white; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* ── SimpleMDE ── */
+    .editor-label { font-size: 0.875rem; font-weight: 500; color: #475569; margin-bottom: 0.5rem; display: block; }
+    .CodeMirror { border: 2px solid #e2e8f0; border-radius: 8px; }
+
+    /* ════════════════════════════════════
+       PREVIEW MODAL
+    ════════════════════════════════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      z-index: 1500;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 960px;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .modal-header h2 { font-size: 1.125rem; font-weight: 700; color: #1e293b; }
+
+    .modal-header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn-icon { background: none; border: none; cursor: pointer; padding: 0.375rem; border-radius: 6px; color: #64748b; font-size: 1.25rem; line-height: 1; transition: background 0.15s, color 0.15s; }
+    .btn-icon:hover { background: #f1f5f9; color: #1e293b; }
+
+    .modal-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 0.75rem;
+      color: #64748b;
+      font-size: 1rem;
+    }
+    .spinner {
+      width: 22px; height: 22px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #previewFrame {
+      width: 100%;
+      flex: 1;
+      border: none;
+      display: block;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
     @media (max-width: 800px) {
       .grid { grid-template-columns: 1fr; }
       .file-inputs { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .modal { max-height: 98vh; }
     }
   </style>
 </head>
@@ -59,9 +161,10 @@
   <div class="container">
     <header>
       <h1>📄 Lab Report Maker</h1>
-      <p>Upload code, output screenshots & write problem description → Get professional PDF</p>
+      <p>Upload code, output screenshots &amp; write problem descriptions → Get professional PDF</p>
     </header>
     <main>
+      <!-- Lab Info -->
       <div class="section">
         <div class="section-title">Lab Info</div>
         <div class="grid">
@@ -76,6 +179,7 @@
         </div>
       </div>
 
+      <!-- Tasks -->
       <div class="section">
         <div class="section-title" id="tasksTitle">Tasks (0)</div>
         <div id="tasksContainer"></div>
@@ -84,55 +188,129 @@
         </button>
       </div>
 
+      <!-- Actions -->
       <div class="actions">
+        <button class="btn btn-secondary" id="previewBtn" disabled>
+          👁 Preview Report
+        </button>
         <button class="btn btn-primary" id="generateBtn" disabled>
-          Generate PDF
+          ⚡ Generate PDF
         </button>
       </div>
     </main>
   </div>
 
+  <!-- ════ PREVIEW MODAL ════ -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">📄 Report Preview</h2>
+        <div class="modal-header-actions">
+          <span id="modalMeta" style="font-size:0.85rem; color:#64748b;"></span>
+          <button class="btn-icon" id="modalClose" title="Close preview" aria-label="Close preview">✕</button>
+        </div>
+      </div>
+
+      <div class="modal-body" id="modalBody">
+        <div class="preview-loading" id="previewLoading">
+          <div class="spinner"></div>
+          <span>Generating preview…</span>
+        </div>
+        <iframe
+          id="previewFrame"
+          title="Report Preview"
+          sandbox="allow-same-origin"
+          style="display:none;"
+        ></iframe>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalClose2">Close</button>
+        <button class="btn btn-success" id="downloadBtn" disabled>
+          ⬇ Download PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js"></script>
   <script>
+    // ─── State ────────────────────────────────────────────────────────────────
     let taskCounter = 0;
-    const editors = [];
+
+    /**
+     * editors: Map<taskId (number), SimpleMDE instance>
+     * Using a Map avoids the stale-index bug that occurred with the old array.
+     */
+    const editors = new Map();
+
+    // Cached HTML from last /api/preview-html call — used by Download PDF
+    let lastPreviewHtml = null;
+
     const tasksContainer = document.getElementById('tasksContainer');
-    const tasksTitle = document.getElementById('tasksTitle');
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    const generateBtn = document.getElementById('generateBtn');
-    const toast = document.getElementById('toast');
+    const tasksTitle     = document.getElementById('tasksTitle');
+    const addTaskBtn     = document.getElementById('addTaskBtn');
+    const generateBtn    = document.getElementById('generateBtn');
+    const previewBtn     = document.getElementById('previewBtn');
+    const toast          = document.getElementById('toast');
     const templateSelect = document.getElementById('templateSelect');
 
+    // Modal elements
+    const previewModal   = document.getElementById('previewModal');
+    const previewLoading = document.getElementById('previewLoading');
+    const previewFrame   = document.getElementById('previewFrame');
+    const modalMeta      = document.getElementById('modalMeta');
+    const downloadBtn    = document.getElementById('downloadBtn');
+
+    // ─── Templates ────────────────────────────────────────────────────────────
     async function loadTemplates() {
       try {
-        const res = await fetch('/api/templates');
+        const res  = await fetch('/api/templates');
         const data = await res.json();
         if (data.success) {
-          templateSelect.innerHTML = data.templates.map(t =>
-            `<option value="${t.id}">${t.name} - ${t.description}</option>`
-          ).join('');
+          templateSelect.innerHTML = data.templates
+            .map(t => `<option value="${t.id}">${t.name} — ${t.description}</option>`)
+            .join('');
         }
       } catch (e) { console.error('Failed to load templates', e); }
     }
 
+    // ─── Toast ────────────────────────────────────────────────────────────────
     function showToast(message, type = 'info') {
       toast.textContent = message;
       toast.className = `toast ${type} show`;
-      setTimeout(() => toast.classList.remove('show'), 3000);
+      setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
+    // ─── Task counter / validation ────────────────────────────────────────────
     function updateTasksTitle() {
       const count = tasksContainer.children.length;
       tasksTitle.textContent = `Tasks (${count})`;
-      generateBtn.disabled = count === 0;
+      validateForm();
     }
 
+    function validateForm() {
+      const forms = tasksContainer.querySelectorAll('.task-form');
+      let allValid = forms.length > 0;
+      for (const form of forms) {
+        // At least one code file must be selected
+        const codeFiles = form.querySelector('.code-files').files;
+        const taskTitle = form.querySelector('.task-title').value.trim();
+        if (codeFiles.length === 0 || !taskTitle) { allValid = false; break; }
+      }
+      generateBtn.disabled = !allValid;
+      previewBtn.disabled  = !allValid;
+    }
+
+    // ─── Create task form ─────────────────────────────────────────────────────
     function createTaskForm() {
       const taskId = ++taskCounter;
       const div = document.createElement('div');
       div.className = 'task-form';
       div.dataset.taskId = taskId;
+
       div.innerHTML = `
         <div class="task-header-row">
           <div>
@@ -149,124 +327,284 @@
 
         <div class="file-inputs" style="margin-bottom: 1.5rem;">
           <div>
-            <label>Source Code File <span style="color:#dc2626">*</span></label>
-            <input type="file" class="code-file" accept=".js,.py,.c,.cpp,.asm,.s,.txt" required>
+            <label>
+              Source Code Files <span style="color:#dc2626">*</span>
+              <span style="font-weight:400; color:#64748b;">(select multiple if needed)</span>
+            </label>
+            <input type="file" class="code-files" accept=".js,.py,.c,.cpp,.asm,.s,.txt" multiple required>
+            <div class="file-list code-file-list"></div>
           </div>
           <div>
-            <label>Output Files (Screenshots or Text) <span style="color:#64748b">(optional)</span></label>
+            <label>
+              Output Files
+              <span style="font-weight:400; color:#64748b;">(screenshots or text, optional)</span>
+            </label>
             <input type="file" class="output-files" accept=".png,.jpg,.jpeg,.webp,.txt,.out,.log" multiple>
             <div class="file-list output-file-list"></div>
           </div>
         </div>
       `;
-      
+
+      // ── Remove task (with editor cleanup) ──────────────────────────────────
       div.querySelector('.btn-remove').addEventListener('click', () => {
+        // Destroy the SimpleMDE instance to prevent memory leak
+        const editor = editors.get(taskId);
+        if (editor) {
+          editor.toTextArea();   // restores original <textarea>, cleans up listeners
+          editors.delete(taskId);
+        }
         div.remove();
         updateTasksTitle();
       });
 
-      div.querySelector('.code-file').addEventListener('change', validateForm);
-
+      // ── Validate on code file change ───────────────────────────────────────
+      const codeInput   = div.querySelector('.code-files');
+      const codeList    = div.querySelector('.code-file-list');
       const outputInput = div.querySelector('.output-files');
-      const outputList = div.querySelector('.output-file-list');
-      outputInput.addEventListener('change', () => {
-        outputList.innerHTML = Array.from(outputInput.files).map(f => 
-          `<div class="file-item"><span>${f.name} (${(f.size/1024).toFixed(1)} KB)</span></div>`
-        ).join('');
+      const outputList  = div.querySelector('.output-file-list');
+
+      codeInput.addEventListener('change', () => {
+        codeList.innerHTML = renderFileList(codeInput.files);
+        validateForm();
       });
 
-      const editor = new SimpleMDE({ 
+      outputInput.addEventListener('change', () => {
+        outputList.innerHTML = renderFileList(outputInput.files);
+      });
+
+      // ── Task title validation ──────────────────────────────────────────────
+      div.querySelector('.task-title').addEventListener('input', validateForm);
+
+      // ── SimpleMDE ─────────────────────────────────────────────────────────
+      const editor = new SimpleMDE({
         element: div.querySelector('.problem-editor'),
         spellChecker: false,
         status: false,
         toolbar: ['bold', 'italic', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'code', 'link']
       });
-      editors.push({ taskId, editor });
+      editors.set(taskId, editor);
 
       return div;
     }
 
-    function validateForm() {
-      const forms = tasksContainer.querySelectorAll('.task-form');
-      let allValid = forms.length > 0;
-      for (const form of forms) {
-        const codeFile = form.querySelector('.code-file').files[0];
-        const taskTitle = form.querySelector('.task-title').value.trim();
-        if (!codeFile || !taskTitle) { allValid = false; break; }
-      }
-      generateBtn.disabled = !allValid;
+    function renderFileList(fileList) {
+      return Array.from(fileList).map(f =>
+        `<div class="file-item">
+           <span>${escHtml(f.name)}</span>
+           <span style="color:#94a3b8">${(f.size / 1024).toFixed(1)} KB</span>
+         </div>`
+      ).join('');
     }
 
+    function escHtml(str) {
+      return str.replace(/[&<>"']/g, m =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m])
+      );
+    }
+
+    // ─── Collect form data & upload files ─────────────────────────────────────
+    /**
+     * Returns { taskPairs } after uploading all files.
+     * taskPairs[].codeFiles  = [serverFilename, ...]
+     * taskPairs[].outputFiles = [serverFilename, ...]
+     */
+    async function uploadAndBuildPairs() {
+      const forms = tasksContainer.querySelectorAll('.task-form');
+      const formData = new FormData();
+      const rawPairs = [];
+
+      for (const form of forms) {
+        const taskId     = Number(form.dataset.taskId);
+        const codeFiles  = Array.from(form.querySelector('.code-files').files);
+        const outFiles   = Array.from(form.querySelector('.output-files').files);
+        const taskTitle  = form.querySelector('.task-title').value.trim();
+        const editor     = editors.get(taskId);
+        const problemDesc = editor ? editor.value() : '';
+
+        if (codeFiles.length === 0) continue;
+
+        codeFiles.forEach(f => formData.append('files', f));
+        outFiles.forEach(f  => formData.append('files', f));
+
+        rawPairs.push({
+          taskName:          taskTitle,
+          problemDescription: problemDesc,
+          codeFileNames:     codeFiles.map(f => f.name),
+          outputFileNames:   outFiles.map(f => f.name),
+        });
+      }
+
+      const uploadRes  = await fetch('/api/upload', { method: 'POST', body: formData });
+      const uploadJson = await uploadRes.json();
+      if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
+
+      // Map original filename → server-assigned filename
+      const nameMap = new Map(uploadJson.files.map(f => [f.originalname, f.filename]));
+
+      const taskPairs = rawPairs.map(p => ({
+        taskName:          p.taskName,
+        problemDescription: p.problemDescription,
+        codeFiles:  p.codeFileNames.map(n => nameMap.get(n)).filter(Boolean),
+        outputFiles: p.outputFileNames.map(n => nameMap.get(n)).filter(Boolean),
+      }));
+
+      return taskPairs;
+    }
+
+    // ─── Preview flow ─────────────────────────────────────────────────────────
+    async function handlePreview() {
+      previewBtn.disabled  = true;
+      generateBtn.disabled = true;
+      previewBtn.innerHTML = '⏳ Loading…';
+      lastPreviewHtml      = null;
+
+      openModal();   // show modal with spinner right away
+
+      try {
+        const taskPairs = await uploadAndBuildPairs();
+        const labTitle  = document.getElementById('labTitle').value.trim() || 'Lab Report';
+        const templateId = templateSelect.value;
+
+        const res  = await fetch('/api/preview-html', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ taskPairs, labTitle, templateId }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Preview failed');
+
+        lastPreviewHtml = data.html;
+        showPreviewInFrame(data.html);
+
+        modalMeta.textContent = `${data.taskCount} task${data.taskCount !== 1 ? 's' : ''} · ${data.template}`;
+        downloadBtn.disabled = false;
+
+      } catch (err) {
+        closeModal();
+        showToast(err.message, 'error');
+      } finally {
+        previewBtn.disabled  = false;
+        generateBtn.disabled = false;
+        previewBtn.innerHTML = '👁 Preview Report';
+      }
+    }
+
+    function showPreviewInFrame(html) {
+      previewLoading.style.display = 'none';
+      previewFrame.style.display   = 'block';
+      // Write HTML directly into the iframe
+      const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+
+    // ─── Modal helpers ────────────────────────────────────────────────────────
+    function openModal() {
+      // Reset state each time
+      previewLoading.style.display = 'flex';
+      previewFrame.style.display   = 'none';
+      downloadBtn.disabled         = true;
+      modalMeta.textContent        = '';
+      previewModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      previewModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modalClose').addEventListener('click',  closeModal);
+    document.getElementById('modalClose2').addEventListener('click', closeModal);
+
+    // Close on backdrop click
+    previewModal.addEventListener('click', e => {
+      if (e.target === previewModal) closeModal();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && previewModal.classList.contains('open')) closeModal();
+    });
+
+    // ─── Download PDF (from preview HTML) ────────────────────────────────────
+    downloadBtn.addEventListener('click', async () => {
+      if (!lastPreviewHtml) return;
+
+      downloadBtn.disabled  = true;
+      downloadBtn.innerHTML = '⏳ Generating PDF…';
+
+      try {
+        const res  = await fetch('/api/generate-pdf-from-html', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ html: lastPreviewHtml }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'PDF generation failed');
+
+        showToast('PDF ready! Downloading…', 'success');
+        // Trigger download
+        const a = document.createElement('a');
+        a.href     = data.pdfUrl;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        // Close modal after a short delay
+        setTimeout(closeModal, 1200);
+
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        downloadBtn.disabled  = false;
+        downloadBtn.innerHTML = '⬇ Download PDF';
+      }
+    });
+
+    // ─── Direct Generate PDF (skips preview) ─────────────────────────────────
+    generateBtn.addEventListener('click', async () => {
+      generateBtn.disabled  = true;
+      generateBtn.innerHTML = '⏳ Generating…';
+
+      try {
+        const taskPairs  = await uploadAndBuildPairs();
+        const labTitle   = document.getElementById('labTitle').value.trim() || 'Lab Report';
+        const templateId = templateSelect.value;
+
+        const res  = await fetch('/api/generate-report', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ taskPairs, labTitle, templateId }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Generation failed');
+
+        showToast(`PDF ready! ${data.taskCount} tasks generated.`, 'success');
+        setTimeout(() => { window.location.href = data.pdfUrl; }, 800);
+
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        generateBtn.disabled  = false;
+        generateBtn.innerHTML = '⚡ Generate PDF';
+      }
+    });
+
+    // ─── Add task button ──────────────────────────────────────────────────────
     addTaskBtn.addEventListener('click', () => {
       tasksContainer.appendChild(createTaskForm());
       updateTasksTitle();
     });
 
-    generateBtn.addEventListener('click', async () => {
-      generateBtn.disabled = true;
-      generateBtn.innerHTML = '⏳ Generating...';
+    previewBtn.addEventListener('click', handlePreview);
 
-      const forms = tasksContainer.querySelectorAll('.task-form');
-      const allFiles = [];
-
-      try {
-        // Collect all files and task pairs
-        const taskPairs = [];
-        for (const form of forms) {
-          const codeFile = form.querySelector('.code-file').files[0];
-          const outputFiles = Array.from(form.querySelector('.output-files').files);
-          const taskTitle = form.querySelector('.task-title').value.trim();
-          const taskId = form.dataset.taskId;
-          const editor = editors.find(e => e.taskId == taskId)?.editor;
-          const problemDesc = editor ? editor.value() : '';
-
-          if (!codeFile) continue;
-          allFiles.push({ file: codeFile });
-          outputFiles.forEach(f => allFiles.push({ file: f }));
-
-          taskPairs.push({
-            codeFileId: codeFile.name,
-            outputFiles: outputFiles.map(f => f.name),
-            taskName: taskTitle,
-            problemDescription: problemDesc
-          });
-        }
-
-        const formData = new FormData();
-        for (const { file } of allFiles) formData.append('files', file);
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
-        const uploadJson = await uploadRes.json();
-        if (!uploadJson.success) throw new Error(uploadJson.error);
-
-        const uploadedMap = new Map(uploadJson.files.map(f => [f.originalname, f.filename]));
-        taskPairs.forEach(tp => {
-          tp.codeFileId = uploadedMap.get(tp.codeFileId);
-          tp.outputFiles = tp.outputFiles.map(n => uploadedMap.get(n)).filter(Boolean);
-        });
-
-        const labTitle = document.getElementById('labTitle').value.trim() || 'Lab Report';
-        const templateId = templateSelect.value;
-        const genRes = await fetch('/api/generate-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskPairs, labTitle, templateId })
-        });
-        const genJson = await genRes.json();
-        if (!genJson.success) throw new Error(genJson.error);
-
-        showToast(`PDF ready! ${genJson.taskCount} tasks`, 'success');
-        setTimeout(() => { window.location.href = genJson.pdfUrl; }, 800);
-      } catch (err) {
-        showToast(err.message, 'error');
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = 'Generate PDF';
-      }
-    });
-
+    // ─── Init ─────────────────────────────────────────────────────────────────
     loadTemplates().then(() => {
       tasksContainer.appendChild(createTaskForm());
       updateTasksTitle();
-      document.querySelectorAll('input').forEach(i => i.addEventListener('change', validateForm));
     });
   </script>
 </body>
