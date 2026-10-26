@@ -1,9 +1,22 @@
 import express from "express";
 import reportRoutes from "./src/routes/report.route.js";
+import path from "path"; // Fixed: Changed from path/win32 to platform-agnostic path
 
 const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Resolve the absolute path to your public folder safely across Linux, macOS, and Windows
+const publicPath = path.resolve('src/public');
+
+// 1. Explicitly catch the root web request and send the interface file
+app.get('/', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// 2. Serve static dashboard assets (CSS, JS, etc.) safely
+app.use(express.static(publicPath));
 
 // Ingress API routes injection
 app.use('/api/reports', reportRoutes);
@@ -19,4 +32,3 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 export default app;
-

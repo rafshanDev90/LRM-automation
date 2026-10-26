@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Report Creator Workspace</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-dark: #1e293b;
+      --accent-blue: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 850px;
+    }
+
+    header {
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 8px 0;
+      color: var(--accent-blue);
+    }
+
+    p {
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    form {
+      background: var(--panel-dark);
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    input[type="text"], textarea, input[type="file"] {
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent-blue);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .terminal-input {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      color: #38bdf8;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    button {
+      background-color: var(--accent-blue);
+      border: none;
+      border-radius: 6px;
+      color: var(--bg-dark);
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #statusMessage {
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .status-loading {
+      background: #1e3a8a;
+      color: #93c5fd;
+      display: block !important;
+    }
+
+    .status-success {
+      background: #065f46;
+      color: #34d399;
+      display: block !important;
+    }
+
+    .status-error {
+      background: #991b1b;
+      color: #fca5a5;
+      display: block !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Lab Report Creator</h1>
+      <p>Compile tasks, source code, and outputs into clean PDFs instantly.</p>
+    </header>
+
+    <form id="reportForm">
+      <div class="form-group">
+        <label for="title">Task / Lab Title</label>
+        <input type="text" id="title" name="title" placeholder="e.g., Data Systems Lab 01" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Objective & Context Summary</label>
+        <textarea id="description" name="description" placeholder="Describe the goal of this module..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="codeFiles">Source Code Artifacts (Select multiple files)</label>
+        <input type="file" id="codeFiles" name="codeFiles" multiple required>
+      </div>
+
+      <div class="form-group">
+        <label for="outputLogs">Execution Outputs & Operational Logs</label>
+        <textarea id="outputLogs" name="outputLogs" class="terminal-input" placeholder="[SUCCESS] Build finished..."></textarea>
+      </div>
+
+      <div id="statusMessage"></div>
+
+      <button type="submit" id="submitBtn">Generate & Download PDF</button>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const form = e.target;
+      const submitBtn = document.getElementById('submitBtn');
+      const statusMessage = document.getElementById('statusMessage');
+      
+      // Update UI state to loading
+      submitBtn.disabled = true;
+      statusMessage.className = 'status-loading';
+      statusMessage.textContent = 'Launching browser runtime and generating document... Please wait.';
+
+      const formData = new FormData();
+      formData.append('title', document.getElementById('title').value);
+      formData.append('description', document.getElementById('description').value);
+      formData.append('outputLogs', document.getElementById('outputLogs').value);
+      
+      const fileInput = document.getElementById('codeFiles');
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('codeFiles', fileInput.files[i]);
+      }
+
+      try {
+        const response = await fetch('/api/reports/generate', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error('Generation failure returned from server.');
+
+        // Extract filename out of header metadata or fallback
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'lab_report.pdf';
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          filename = contentDisposition.split('filename=')[1].replaceAll('"', '');
+        }
+
+        // Convert incoming chunk array directly to down-stream browser file attachment link download triggers
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const linkElement = document.createElement('a');
+        
+        linkElement.href = downloadUrl;
+        linkElement.download = filename;
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+
+        statusMessage.className = 'status-success';
+        statusMessage.textContent = 'Report downloaded successfully!';
+        form.reset();
+      } catch (err) {
+        console.error(err);
+        statusMessage.className = 'status-error';
+        statusMessage.textContent = 'Error: Failed to process compilation task.';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
