@@ -20,7 +20,7 @@ export class ReportController {
       const highlightedFiles = HighlightService.highlightFiles(filePayloads);
 
       // 3. Load the structural HTML/CSS blueprint template from disk
-      const templatePath = path.resolve('src/templates/default-report.html');
+      const templatePath = path.resolve('src/templates/default.report.html');
       const htmlTemplate = await fs.readFile(templatePath, 'utf-8');
 
       // 4. Compile layout and render the PDF binary array via Puppeteer

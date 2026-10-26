@@ -12,8 +12,9 @@ export class PdfService {
   public static async generateReport(data: ReportData, htmlTemplate: string): Promise<Buffer> {
     // Inject data into template
     let html = htmlTemplate;
-    html = html.replace('{{TITLE}}', this.escapeHtml(data.title || 'Lab Report'));
-    html = html.replace('{{DESCRIPTION}}', this.escapeHtml(data.description || ''));
+    const title = this.escapeHtml(data.title || 'Lab Report');
+    html = html.replaceAll('{{TITLE}}', title);
+    html = html.replaceAll('{{DESCRIPTION}}', this.escapeHtml(data.description || ''));
     
     // Generate code blocks
     let codeBlocksHtml = '';
@@ -29,10 +30,10 @@ export class PdfService {
     } else {
       codeBlocksHtml = '<p style="color: var(--text-muted);">No source files provided.</p>';
     }
-    html = html.replace('{{CODE_BLOCKS}}', codeBlocksHtml);
+    html = html.replaceAll('{{CODE_BLOCKS}}', codeBlocksHtml);
     
     // Inject output logs
-    html = html.replace('{{OUTPUT_LOGS}}', this.escapeHtml(data.outputLogs || 'No logs provided.'));
+    html = html.replaceAll('{{OUTPUT_LOGS}}', this.escapeHtml(data.outputLogs || 'No logs provided.'));
     
     const browser = await puppeteer.launch({
       headless: true,
