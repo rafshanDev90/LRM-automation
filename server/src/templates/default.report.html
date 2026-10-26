@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{TITLE}}</title>
+  <style>
+    /* Clean Tech & Engineering Typography System */
+    :root {
+      --primary-color: #1a365d;
+      --text-dark: #2d3748;
+      --text-muted: #718096;
+      --bg-code: #1e1e1e; /* Visual VS-Code dark token theme matching */
+      --border-color: #e2e8f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header-block {
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 15px;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-size: 24pt;
+      margin: 0 0 10px 0;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      font-size: 16pt;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+      margin-top: 25px;
+    }
+
+    h3 {
+      font-size: 12pt;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 10pt;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .description-box {
+      font-size: 11pt;
+      margin-bottom: 30px;
+      text-align: justify;
+    }
+
+    /* Target Print Engine Code Container Block Rules */
+    .code-section {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin-bottom: 25px;
+    }
+
+    /* Embedded Highlight.js visual styles */
+    pre.hljs {
+      background: var(--bg-code) !important;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 9.5pt;
+      overflow: visible !important;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* Essential Dark Token Palette Overrides */
+    .hljs-keyword { color: #569cd6; font-weight: bold; }
+    .hljs-string  { color: #ce9178; }
+    .hljs-comment { color: #6a9955; font-style: italic; }
+    .hljs-number  { color: #b5cea8; }
+    .hljs-function{ color: #dcdcaa; }
+    .hljs-title   { color: #4ec9b0; }
+
+    .terminal-box {
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 10pt;
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 4px solid #0ea5e9;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-block">
+    <h1>{{TITLE}}</h1>
+    <div class="meta-grid">
+      <div><strong>Classification:</strong> Engineering / Software Lab Report</div>
+      <div style="text-align: right;"><strong>Status:</strong> Completed Documentation</div>
+    </div>
+  </div>
+
+  <h2>1. Objective & Context Summary</h2>
+  <div class="description-box">
+    {{DESCRIPTION}}
+  </div>
+
+  <h2>2. Implementation Source Code Artifacts</h2>
+  {{CODE_BLOCKS}}
+
+  <h2>3. Execution Outputs & Operational Logs</h2>
+  <div class="code-section">
+    <pre class="terminal-box">{{OUTPUT_LOGS}}</pre>
+  </div>
+
+</body>
+</html>

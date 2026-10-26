@@ -1,0 +1,34 @@
+/* src/templates/styles.css layout framework */
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #1a202c;
+    font-size: 11pt;
+  }
+
+  /* Prevent sections or headers from separating or abandoning content blocks */
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Structural isolation rules for source code files */
+  .code-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 2rem;
+  }
+
+  pre.hljs {
+    white-space: pre-wrap;       /* Forces horizontal content tracking wrapping */
+    word-wrap: break-word;
+    overflow: visible !important; /* Prevents container cutting scroll elements */
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 12px;
+    background-color: #f7fafc !important;
+  }
+}
