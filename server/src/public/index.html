@@ -15,6 +15,10 @@
       --border-color: #334155;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       background-color: var(--bg-dark);
       color: var(--text-main);
@@ -27,7 +31,7 @@
 
     .container {
       width: 100%;
-      max-width: 850px;
+      max-width: 900px;
     }
 
     header {
@@ -54,7 +58,7 @@
       border: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 22px;
     }
 
     .form-group {
@@ -67,6 +71,12 @@
       font-weight: 600;
       font-size: 0.95rem;
       color: var(--text-main);
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text-muted);
     }
 
     input[type="text"], textarea, input[type="file"] {
@@ -87,7 +97,7 @@
 
     textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 90px;
     }
 
     .terminal-input {
@@ -113,12 +123,93 @@
       transition: background-color 0.2s, transform 0.1s;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       background-color: var(--accent-hover);
     }
 
-    button:active {
+    button:active:not(:disabled) {
       transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Task builder */
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+    }
+
+    .tasks-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+
+    .tasks-header h2 span {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: rgba(56, 189, 248, 0.12);
+    }
+
+    #tasksContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .task-card {
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .task-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-card-title {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--accent-blue);
+      letter-spacing: 0.02em;
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    .btn-remove:hover:not(:disabled) {
+      background-color: rgba(153, 27, 27, 0.35);
     }
 
     #statusMessage {
@@ -153,58 +244,132 @@
   <div class="container">
     <header>
       <h1>Lab Report Creator</h1>
-      <p>Compile tasks, source code, and outputs into clean PDFs instantly.</p>
+      <p>Compile a full lab &mdash; multiple tasks with source code and outputs &mdash; into one PDF.</p>
     </header>
 
     <form id="reportForm">
       <div class="form-group">
-        <label for="title">Task / Lab Title</label>
-        <input type="text" id="title" name="title" placeholder="e.g., Data Systems Lab 01" required>
+        <label for="labTitle">Lab Title</label>
+        <input type="text" id="labTitle" name="labTitle" placeholder="e.g., Data Systems Lab 01" required>
       </div>
 
-      <div class="form-group">
-        <label for="description">Objective & Context Summary</label>
-        <textarea id="description" name="description" placeholder="Describe the goal of this module..." required></textarea>
+      <div class="tasks-header">
+        <h2>Lab Tasks <span id="taskCount">(1)</span></h2>
+        <button type="button" id="addTaskBtn" class="btn-secondary">+ Add Task</button>
       </div>
 
-      <div class="form-group">
-        <label for="codeFiles">Source Code Artifacts (Select multiple files)</label>
-        <input type="file" id="codeFiles" name="codeFiles" multiple required>
-      </div>
-
-      <div class="form-group">
-        <label for="outputLogs">Execution Outputs & Operational Logs</label>
-        <textarea id="outputLogs" name="outputLogs" class="terminal-input" placeholder="[SUCCESS] Build finished..."></textarea>
-      </div>
+      <div id="tasksContainer"></div>
 
       <div id="statusMessage"></div>
 
-      <button type="submit" id="submitBtn">Generate & Download PDF</button>
+      <button type="submit" id="submitBtn">Generate &amp; Download PDF</button>
     </form>
   </div>
 
+  <!-- Blueprint for a single task, cloned by the task builder -->
+  <template id="taskTemplate">
+    <section class="task-card">
+      <div class="task-card-header">
+        <h3 class="task-card-title">Task 1</h3>
+        <button type="button" class="btn-remove" title="Remove this task">Remove</button>
+      </div>
+
+      <div class="form-group">
+        <label>Task Title</label>
+        <input type="text" class="task-title" placeholder="e.g., Implement an LRU cache" required>
+      </div>
+
+      <div class="form-group">
+        <label>Objective &amp; Context Summary</label>
+        <textarea class="task-description" placeholder="Describe the goal and approach for this task..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Source Code Artifacts <span class="hint">(up to 10 files, 5 MB each)</span></label>
+        <input type="file" class="task-files" multiple>
+      </div>
+
+      <div class="form-group">
+        <label>Execution Outputs &amp; Operational Logs</label>
+        <textarea class="task-logs terminal-input" placeholder="[SUCCESS] Build finished..."></textarea>
+      </div>
+    </section>
+  </template>
+
   <script>
-    document.getElementById('reportForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const form = e.target;
-      const submitBtn = document.getElementById('submitBtn');
-      const statusMessage = document.getElementById('statusMessage');
-      
-      // Update UI state to loading
-      submitBtn.disabled = true;
-      statusMessage.className = 'status-loading';
-      statusMessage.textContent = 'Launching browser runtime and generating document... Please wait.';
+    const MAX_TASKS = 20;
+
+    const reportForm = document.getElementById('reportForm');
+    const tasksContainer = document.getElementById('tasksContainer');
+    const taskTemplate = document.getElementById('taskTemplate');
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskCount = document.getElementById('taskCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+
+    function getTaskCards() {
+      return Array.from(tasksContainer.querySelectorAll('.task-card'));
+    }
+
+    /** Keeps headings numbered and toggles controls based on the current task count. */
+    function refreshTaskBuilder() {
+      const cards = getTaskCards();
+
+      cards.forEach((card, index) => {
+        card.querySelector('.task-card-title').textContent = 'Task ' + (index + 1);
+        card.querySelector('.btn-remove').disabled = cards.length === 1;
+      });
+
+      taskCount.textContent = '(' + cards.length + ')';
+      addTaskBtn.disabled = cards.length >= MAX_TASKS;
+    }
+
+    function addTask() {
+      const card = taskTemplate.content.firstElementChild.cloneNode(true);
+
+      card.querySelector('.btn-remove').addEventListener('click', () => {
+        card.remove();
+        refreshTaskBuilder();
+      });
+
+      tasksContainer.appendChild(card);
+      refreshTaskBuilder();
+    }
+
+    addTaskBtn.addEventListener('click', () => {
+      addTask();
+      const cards = getTaskCards();
+      cards[cards.length - 1].querySelector('.task-title').focus();
+    });
+
+    reportForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const cards = getTaskCards();
+
+      // Serialize task metadata; files are appended separately as task_0, task_1, ...
+      const tasks = cards.map((card) => ({
+        title: card.querySelector('.task-title').value.trim(),
+        description: card.querySelector('.task-description').value.trim(),
+        outputLogs: card.querySelector('.task-logs').value
+      }));
 
       const formData = new FormData();
-      formData.append('title', document.getElementById('title').value);
-      formData.append('description', document.getElementById('description').value);
-      formData.append('outputLogs', document.getElementById('outputLogs').value);
-      
-      const fileInput = document.getElementById('codeFiles');
-      for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('codeFiles', fileInput.files[i]);
-      }
+      formData.append('labTitle', document.getElementById('labTitle').value.trim());
+      formData.append('tasks', JSON.stringify(tasks));
+
+      cards.forEach((card, index) => {
+        const files = card.querySelector('.task-files').files;
+        for (let i = 0; i < files.length; i++) {
+          formData.append('task_' + index, files[i]);
+        }
+      });
+
+      submitBtn.disabled = true;
+      addTaskBtn.disabled = true;
+      statusMessage.className = 'status-loading';
+      statusMessage.textContent =
+        'Compiling ' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' into one document... Please wait.';
 
       try {
         const response = await fetch('/api/reports/generate', {
@@ -212,7 +377,18 @@
           body: formData
         });
 
-        if (!response.ok) throw new Error('Generation failure returned from server.');
+        if (!response.ok) {
+          let message = 'Generation failed with status ' + response.status + '.';
+          try {
+            const payload = await response.json();
+            if (payload && (payload.error || payload.message)) {
+              message = payload.error || payload.message;
+            }
+          } catch (_) {
+            /* Response was not JSON; keep the status message. */
+          }
+          throw new Error(message);
+        }
 
         // Extract filename out of header metadata or fallback
         const contentDisposition = response.headers.get('Content-Disposition');
@@ -221,28 +397,35 @@
           filename = contentDisposition.split('filename=')[1].replaceAll('"', '');
         }
 
-        // Convert incoming chunk array directly to down-stream browser file attachment link download triggers
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const linkElement = document.createElement('a');
-        
+
         linkElement.href = downloadUrl;
         linkElement.download = filename;
         document.body.appendChild(linkElement);
         linkElement.click();
         document.body.removeChild(linkElement);
+        window.URL.revokeObjectURL(downloadUrl);
 
         statusMessage.className = 'status-success';
-        statusMessage.textContent = 'Report downloaded successfully!';
-        form.reset();
-      } catch (err) {
-        console.error(err);
+        statusMessage.textContent = 'Report with ' + tasks.length + ' task' + (tasks.length === 1 ? '' : 's') + ' downloaded successfully!';
+
+        reportForm.reset();
+        tasksContainer.innerHTML = '';
+        addTask();
+      } catch (error) {
+        console.error(error);
         statusMessage.className = 'status-error';
-        statusMessage.textContent = 'Error: Failed to process compilation task.';
+        statusMessage.textContent = 'Error: ' + error.message;
       } finally {
         submitBtn.disabled = false;
+        refreshTaskBuilder();
       }
     });
+
+    // Start with a single task card so the form is immediately usable.
+    addTask();
   </script>
 </body>
 </html>

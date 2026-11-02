@@ -4,10 +4,10 @@ import { ReportController } from '../controller/report.controller.js';
 
 const router = Router();
 
-// Endpoint handles mixed text payloads and multi-file code arrays
+// Accepts dynamic per-task file fields: task_0, task_1, ... (plus legacy `codeFiles`)
 router.post(
   '/generate',
-  reportUploadMiddleware.array('codeFiles', 10), 
+  reportUploadMiddleware.any(),
   ReportController.createReport
 );
 

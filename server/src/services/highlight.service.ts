@@ -19,16 +19,21 @@ export class HighlightService {
   public static highlightFiles(files: CodeFilePayload[]): HighlightedFileResult[] {
     return files.map(file => {
       const extension = path.extname(file.originalName).slice(1);
-      let targetLanguage = hljs.getLanguage(extension) ? extension : 'plaintext';
-      
+      const resolvedLanguage = hljs.getLanguage(extension);
+      const targetLanguage = resolvedLanguage ? extension : 'plaintext';
+
       const highlighted = hljs.highlight(file.rawContent, {
         language: targetLanguage,
         ignoreIllegals: true
       });
 
+      // highlight.js reports short aliases ("js", "py"); show canonical names instead.
+      const displayLanguage =
+        hljs.getLanguage(highlighted.language)?.name ?? (resolvedLanguage ? extension : 'Plain text');
+
       return {
         fileName: file.originalName,
-        language: highlighted.language || targetLanguage,
+        language: displayLanguage,
         htmlContent: `<pre class="hljs"><code class="language-${highlighted.language}">${highlighted.value}</code></pre>`
       };
     });
