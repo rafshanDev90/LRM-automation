@@ -51,6 +51,8 @@ export class PdfService {
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
+        // Large code listings legitimately take longer than Puppeteer's 30s default.
+        timeout: 180000,
         margin: {
           top: '20mm',
           right: '15mm',
